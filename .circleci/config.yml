@@ -7,6 +7,14 @@ workflows:
     jobs:
       - rspec-with-captain:
           context: rwx
+      - rspec-with-captain-retries:
+          context: rwx
+      - rspec-with-captain-partitioning:
+          context: rwx
+      - rspec-with-captain-partitioning-retries:
+          context: rwx
+
+
 
 
 jobs:
@@ -33,7 +41,103 @@ jobs:
             captain run \
               --suite-id captain-examples-circle-rspec \
               --test-results tmp/rspec.json \
-              -- \
-              bundle exec rspec \
-                --format json --out tmp/rspec.json \
-                --format progress
+              -- bundle exec rspec --format json --out tmp/rspec.json --format progress
+  rspec-with-captain-retries:
+    docker:
+      - image: cimg/ruby:3.1.2
+    steps:
+      - checkout
+      - ruby/install-deps
+      - run:
+          name: Download Captain
+          command: |
+            arch=x86_64  # Supported values are x86_64 or aarch64
+            os=linux # Supported values are linux or darwin
+
+            tmp="$(mktemp -d)/captain" && \
+              curl -o $tmp -fsSL "https://releases.captain.build/v1/$os/$arch/captain" && \
+              sudo install $tmp /usr/local/bin && \
+              rm $tmp && \
+              captain --version
+      - run:
+          name: run tests with captain retries
+          command: |
+            captain run \
+              --suite-id captain-examples-circle-rspec-retries \
+              --test-results tmp/rspec.json \
+              --retries 2 \
+              --retry-command "bundle exec rspec --format json --out tmp/rspec.json --format progress {{ tests }}" \
+              --print-summary \
+  rspec-with-captain-partitioning:
+    parallelism: 2
+    docker:
+      - image: cimg/ruby:3.1.2
+    steps:
+      - checkout
+      - ruby/install-deps
+      - run:
+          name: Download Captain
+          command: |
+            arch=x86_64  # Supported values are x86_64 or aarch64
+            os=linux # Supported values are linux or darwin
+
+            tmp="$(mktemp -d)/captain" && \
+              curl -o $tmp -fsSL "https://releases.captain.build/v1/$os/$arch/captain" && \
+              sudo install $tmp /usr/local/bin && \
+              rm $tmp && \
+              captain --version
+      - run:
+          name: run tests with partitioning
+          command: |
+            suite_id="captain-examples-rspec-partitioning"
+
+            test_files=$(
+              captain partition \
+              --suite-id $suite_id\
+              --index $CIRCLE_NODE_INDEX \
+              --total $CIRCLE_NODE_TOTAL \
+              "spec/**/*_spec.rb"
+            )
+
+            captain run \
+              --suite-id $suite_id \
+              --test-results tmp/rspec.json \
+              -- bundle exec rspec --format json --out tmp/rspec.json --format progress $test_files
+  rspec-with-captain-partitioning-retries:
+    parallelism: 2
+    docker:
+      - image: cimg/ruby:3.1.2
+    steps:
+      - checkout
+      - ruby/install-deps
+      - run:
+          name: Download Captain
+          command: |
+            arch=x86_64  # Supported values are x86_64 or aarch64
+            os=linux # Supported values are linux or darwin
+
+            tmp="$(mktemp -d)/captain" && \
+              curl -o $tmp -fsSL "https://releases.captain.build/v1/$os/$arch/captain" && \
+              sudo install $tmp /usr/local/bin && \
+              rm $tmp && \
+              captain --version
+      - run:
+          name: run tests with partitioning and retries
+          command: |
+            suite_id="captain-examples-rspec-partitioning-and-retries"
+
+            test_files=$(
+              captain partition \
+              --suite-id $suite_id \
+              --index $CIRCLE_NODE_INDEX \
+              --total $CIRCLE_NODE_TOTAL \
+              "spec/**/*_spec.rb"
+            )
+
+            captain run \
+              --suite-id $suite_id \
+              --test-results tmp/rspec.json \
+              --retries 2 \
+              --retry-command "bundle exec rspec --format json --out tmp/rspec.json --format progress {{ tests }}" \
+              --print-summary \
+              -- bundle exec rspec --format json --out tmp/rspec.json --format progress $test_files
