@@ -38,7 +38,11 @@ jobs:
             captain run \
               --suite-id captain-examples-circle-rspec \
               --test-results tmp/rspec.json \
+              --reporter junit-xml=tmp/junit.xml \
               -- bundle exec rspec --format json --out tmp/rspec.json --format progress
+      - store_test_results:
+          path: tmp/junit.xml
+
   rspec-with-captain-retries:
     docker:
       - image: cimg/ruby:3.1.2
@@ -65,7 +69,10 @@ jobs:
               --retries 2 \
               --retry-command "bundle exec rspec --format json --out tmp/rspec.json --format progress {{ tests }}" \
               --print-summary \
+              --reporter junit-xml=tmp/junit.xml \
               -- bundle exec rspec --format json --out tmp/rspec.json --format progress
+      - store_test_results:
+          path: tmp/junit.xml
 
   rspec-with-captain-partitioning:
     parallelism: 2
@@ -101,7 +108,11 @@ jobs:
             captain run \
               --suite-id $suite_id \
               --test-results tmp/rspec.json \
+              --reporter junit-xml=tmp/junit.xml \
               -- bundle exec rspec --format json --out tmp/rspec.json --format progress $test_files
+      - store_test_results:
+          path: tmp/junit.xml
+
   rspec-with-captain-partitioning-retries:
     parallelism: 2
     docker:
@@ -139,4 +150,8 @@ jobs:
               --retries 2 \
               --retry-command "bundle exec rspec --format json --out tmp/rspec.json --format progress {{ tests }}" \
               --print-summary \
+              --reporter junit-xml=tmp/junit.xml \
               -- bundle exec rspec --format json --out tmp/rspec.json --format progress $test_files
+
+      - store_test_results:
+          path: tmp/junit.xml
