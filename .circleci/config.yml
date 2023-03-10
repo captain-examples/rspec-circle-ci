@@ -14,9 +14,6 @@ workflows:
       - rspec-with-captain-partitioning-retries:
           context: rwx
 
-
-
-
 jobs:
   rspec-with-captain:
     docker:
@@ -68,6 +65,8 @@ jobs:
               --retries 2 \
               --retry-command "bundle exec rspec --format json --out tmp/rspec.json --format progress {{ tests }}" \
               --print-summary \
+              -- bundle exec rspec --format json --out tmp/rspec.json --format progress
+
   rspec-with-captain-partitioning:
     parallelism: 2
     docker:
@@ -89,7 +88,7 @@ jobs:
       - run:
           name: run tests with partitioning
           command: |
-            suite_id="captain-examples-rspec-partitioning"
+            suite_id="captain-examples-circle-rspec-partitioning"
 
             test_files=$(
               captain partition \
@@ -124,7 +123,7 @@ jobs:
       - run:
           name: run tests with partitioning and retries
           command: |
-            suite_id="captain-examples-rspec-partitioning-and-retries"
+            suite_id="captain-examples-circle-rspec-partitioning-retries"
 
             test_files=$(
               captain partition \
