@@ -3,19 +3,19 @@ orbs:
   ruby: circleci/ruby@2.0.0
 
 workflows:
-  run-rspec-with-captain:
+  run-tests:
     jobs:
-      - rspec-with-captain:
+      - rspec: # <-- this is a job using the captain CLI
+          context: rwx # <-- this is the context that contains the `RWX_ACCESS_TOKEN` environment variable
+      - rspec-with-retries:
           context: rwx
-      - rspec-with-captain-retries:
+      - rspec-with-partitioning:
           context: rwx
-      - rspec-with-captain-partitioning:
-          context: rwx
-      - rspec-with-captain-partitioning-retries:
+      - rspec-with-partitioning-retries:
           context: rwx
 
 jobs:
-  rspec-with-captain:
+  rspec:
     docker:
       - image: cimg/ruby:3.1.2
     steps:
@@ -25,7 +25,7 @@ jobs:
           name: Download Captain
           command: |
             arch=x86_64  # Supported values are x86_64 or aarch64
-            os=linux # Supported values are linux or darwin
+            os=linux     # Supported values are linux or darwin
 
             tmp="$(mktemp -d)/captain" && \
               curl -o $tmp -fsSL "https://releases.captain.build/v1/$os/$arch/captain" && \
@@ -33,7 +33,7 @@ jobs:
               rm $tmp && \
               captain --version
       - run:
-          name: run tests with captain
+          name: run tests
           command: |
             captain run \
               --suite-id captain-examples-circle-rspec \
@@ -43,7 +43,7 @@ jobs:
       - store_test_results:
           path: tmp/junit.xml
 
-  rspec-with-captain-retries:
+  rspec-with-retries:
     docker:
       - image: cimg/ruby:3.1.2
     steps:
@@ -61,7 +61,7 @@ jobs:
               rm $tmp && \
               captain --version
       - run:
-          name: run tests with captain retries
+          name: run tests with retries
           command: |
             captain run \
               --suite-id captain-examples-circle-rspec-retries \
@@ -74,7 +74,7 @@ jobs:
       - store_test_results:
           path: tmp/junit.xml
 
-  rspec-with-captain-partitioning:
+  rspec-with-partitioning:
     parallelism: 2
     docker:
       - image: cimg/ruby:3.1.2
@@ -95,25 +95,23 @@ jobs:
       - run:
           name: run tests with partitioning
           command: |
-            suite_id="captain-examples-circle-rspec-partitioning"
+            export CAPTAIN_SUITE_ID="captain-examples-rspec-partitioning"
 
             test_files=$(
               captain partition \
-              --suite-id $suite_id\
               --index $CIRCLE_NODE_INDEX \
               --total $CIRCLE_NODE_TOTAL \
               "spec/**/*_spec.rb"
             )
 
             captain run \
-              --suite-id $suite_id \
               --test-results tmp/rspec.json \
               --reporter junit-xml=tmp/junit.xml \
               -- bundle exec rspec --format json --out tmp/rspec.json --format progress $test_files
       - store_test_results:
           path: tmp/junit.xml
 
-  rspec-with-captain-partitioning-retries:
+  rspec-with-partitioning-retries:
     parallelism: 2
     docker:
       - image: cimg/ruby:3.1.2
@@ -134,18 +132,16 @@ jobs:
       - run:
           name: run tests with partitioning and retries
           command: |
-            suite_id="captain-examples-circle-rspec-partitioning-retries"
+            export CAPTAIN_SUITE_ID="captain-examples-rspec-partitioning"
 
             test_files=$(
               captain partition \
-              --suite-id $suite_id \
               --index $CIRCLE_NODE_INDEX \
               --total $CIRCLE_NODE_TOTAL \
               "spec/**/*_spec.rb"
             )
 
             captain run \
-              --suite-id $suite_id \
               --test-results tmp/rspec.json \
               --retries 2 \
               --retry-command "bundle exec rspec --format json --out tmp/rspec.json --format progress {{ tests }}" \
