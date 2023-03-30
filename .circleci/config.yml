@@ -91,7 +91,7 @@ jobs:
               "spec/**/*_spec.rb"
             )
 
-            captain run -c "bundle exec rspec --format json --out tmp/rspec.json --format progress $test_files"
+            captain run -- $test_files
       - store_test_results:
           path: tmp/junit.xml
 
@@ -125,7 +125,7 @@ jobs:
               "spec/**/*_spec.rb"
             )
 
-            captain run -c "bundle exec rspec --format json --out tmp/rspec.json --format progress $test_files"
+            captain run -- $test_files
 
       - store_test_results:
           path: tmp/junit.xml
