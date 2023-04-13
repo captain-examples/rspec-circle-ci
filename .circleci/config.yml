@@ -86,8 +86,6 @@ jobs:
 
             test_files=$(
               captain partition \
-              --index $CIRCLE_NODE_INDEX \
-              --total $CIRCLE_NODE_TOTAL \
               "spec/**/*_spec.rb"
             )
 
@@ -120,8 +118,6 @@ jobs:
 
             test_files=$(
               captain partition \
-              --index $CIRCLE_NODE_INDEX \
-              --total $CIRCLE_NODE_TOTAL \
               "spec/**/*_spec.rb"
             )
 
