@@ -82,14 +82,7 @@ jobs:
       - run:
           name: run tests with partitioning
           command: |
-            export CAPTAIN_SUITE_ID="captain-examples-rspec"
-
-            test_files=$(
-              captain partition \
-              "spec/**/*_spec.rb"
-            )
-
-            captain run -- $test_files
+            captain run captain-examples-rspec-partition
       - store_test_results:
           path: tmp/junit.xml
 
@@ -114,14 +107,6 @@ jobs:
       - run:
           name: run tests with partitioning and retries
           command: |
-            export CAPTAIN_SUITE_ID="captain-examples-rspec-retries"
-
-            test_files=$(
-              captain partition \
-              "spec/**/*_spec.rb"
-            )
-
-            captain run -- $test_files
-
+            captain run captain-examples-rspec-partition-retries
       - store_test_results:
           path: tmp/junit.xml
